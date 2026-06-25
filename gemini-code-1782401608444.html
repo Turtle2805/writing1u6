@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive English Quiz - Ms Lê Hằng English</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@500;700;900&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(-45deg, #8854C0, #FDCB6E, #00C9A7, #FF7675);
+            --correct-color: #00D26A;
+            --wrong-color: #FF4757;
+            --card-bg: rgba(255, 255, 255, 0.95);
+            --text-color: #2D3436;
+        }
+
+        * {
+            box-sizing: border-box;
+            font-family: 'Quicksand', sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            height: 100vh;
+            background: var(--primary-gradient);
+            background-size: 400% 400%;
+            animation: gradientBG 12s ease infinite;
+            position: relative;
+            overflow: hidden;
+            color: var(--text-color);
+        }
+
+        /* SVG Animated Pattern Background Overlay cho chủ đề Đại dương/Cá heo */
+        body::before {
+            content: "";
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: -1;
+            opacity: 0.12;
+            background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140' viewBox='0 0 120 120'><text x='10' y='40' font-size='32'>🐬</text><text x='70' y='90' font-size='32'>🐠</text><circle cx='40' cy='90' r='5' fill='%23fff'/><circle cx='90' cy='30' r='3' fill='%23fff'/></svg>");
+            animation: floatPattern 25s linear infinite;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        @keyframes floatPattern {
+            from { background-position: 0 0; }
+            to { background-position: 280px 280px; }
+        }
+
+        /* Top Header & Navigation */
+        header {
+            background: rgba(255, 255, 255, 0.92);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            padding: 10px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 70px;
+            z-index: 10;
+            position: relative;
+        }
+
+        .teacher-brand {
+            font-size: 0.95rem;
+            font-weight: 900;
+            color: #6C5CE7;
+            background: #E8E8FF;
+            padding: 6px 16px;
+            border-radius: 20px;
+            border: 2px solid #6C5CE7;
+        }
+
+        .timer-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .btn-timer {
+            background: #FF9F43;
+            color: white;
+            border: none;
+            padding: 8px 18px;
+            border-radius: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 4px 0 #D35400;
+            transition: all 0.1s ease;
+        }
+
+        .btn-timer:active {
+            transform: translateY(4px);
+            box-shadow: none;
+        }
+
+        .timer-display {
+            font-size: 1.4rem;
+            font-weight: 900;
+            background: #2D3436;
+            color: #00FFCC;
+            padding: 5px 18px;
+            border-radius: 12px;
+            font-family: monospace;
+        }
+
+        /* Split Screen Layout */
+        .main-container {
+            display: flex;
+            height: calc(100vh - 70px);
+            position: relative;
+        }
+
+        .pane {
+            width: 50%;
+            height: 100%;
+            overflow-y: auto;
+            padding: 30px;
+            scroll-behavior: smooth;
+        }
+
+        /* Left Side: Reading Passage */
+        .left-pane {
+            border-right: 4px dashed rgba(255,255,255,0.4);
+            background: rgba(255, 255, 255, 0.55);
+            backdrop-filter: blur(4px);
+        }
+
+        .passage-card {
+            background: white;
+            padding: 25px;
+            border-radius: 24px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.04);
+            margin-bottom: 25px;
+            border: 3px solid #E2E8F0;
+        }
+
+        .passage-title {
+            font-size: 1.8rem;
+            font-weight: 900;
+            color: #2D3748;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .paragraph {
+            font-size: 1.1rem;
+            line-height: 1.75;
+            margin-bottom: 12px;
+            text-align: justify;
+        }
+
+        .btn-translate {
+            background: #9B59B6;
+            color: white;
+            border: none;
+            padding: 6px 14px;
+            border-radius: 15px;
+            font-size: 0.9rem;
+            font-weight: 700;
+            cursor: pointer;
+            margin-bottom: 20px;
+            display: inline-block;
+            box-shadow: 0 3px 0 #8E44AD;
+            transition: transform 0.1s;
+        }
+
+        .btn-translate:active {
+            transform: translateY(3px);
+            box-shadow: none;
+        }
+
+        .translation-box {
+            display: none;
+            background: #F3E5F5;
+            padding: 15px;
+            border-left: 5px solid #9B59B6;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            font-style: italic;
+            line-height: 1.6;
+            animation: fadeIn 0.35s ease-in-out;
+        }
+
+        /* Glossary Table */
+        .glossary-section {
+            background: white;
+            border-radius: 24px;
+            padding: 20px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.04);
+            border: 3px solid #00C9A7;
+        }
+
+        .glossary-title {
+            color: #00A887;
+            font-weight: 900;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .glossary-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .glossary-table th, .glossary-table td {
+            border: 1px solid #E2E8F0;
+            padding: 12px;
+            text-align: left;
+        }
+
+        .glossary-table th {
+            background: #E6FFFA;
+            color: #00A887;
+            font-weight: 900;
+        }
+
+        /* Right Side: Exercises */
+        .right-pane {
+            background: rgba(255, 255, 255, 0.4);
+        }
+
+        .question-card {
+            background: white;
+            border-radius: 24px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 8px 0 rgba(0,0,0,0.06);
+            border: 3px solid #FFF;
+            position: relative;
+        }
+
+        .question-text {
+            font-size: 1.15rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: #2D3748;
+            line-height: 1.6;
+        }
+
+        /* True/False/Not Given Interactive Element */
+        .tfng-blank {
+            display: inline-block;
+            min-width: 140px;
+            padding: 5px 15px;
+            margin: 0 5px;
+            background: #EDF2F7;
+            border: 2px dashed #CBD5E0;
+            border-radius: 12px;
+            text-align: center;
+            cursor: pointer;
+            font-weight: 900;
+            color: #4A5568;
+            transition: all 0.2s;
+        }
+
+        .tfng-blank:hover {
+            background: #E2E8F0;
+            border-color: #4A5568;
+            transform: scale(1.05);
+        }
+
+        .tfng-blank.revealed-true {
+            background-color: #D4EDDA !important;
+            color: #155724 !important;
+            border: 2px solid var(--correct-color) !important;
+        }
+
+        /* Multiple Choice Options styling */
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+        }
+
+        .option-btn {
+            background: #FFFFFF;
+            border: 3px solid #E2E8F0;
+            border-radius: 18px;
+            padding: 14px 20px;
+            font-size: 1.05rem;
+            font-weight: 700;
+            text-align: left;
+            cursor: pointer;
+            box-shadow: 0 5px 0 #E2E8F0;
+            transition: all 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            display: flex;
+            align-items: center;
+        }
+
+        .option-btn:hover {
+            transform: translateY(-3px) scale(1.01);
+            box-shadow: 0 8px 0 #CBD5E0;
+            background: #F7FAFC;
+        }
+
+        .option-btn:active {
+            transform: translateY(5px);
+            box-shadow: none;
+        }
+
+        /* Feedback States */
+        .option-btn.correct {
+            background-color: #D4EDDA !important;
+            border-color: var(--correct-color) !important;
+            box-shadow: 0 5px 0 var(--correct-color) !important;
+            color: #155724 !important;
+        }
+
+        .option-btn.wrong {
+            background-color: #F8D7DA !important;
+            border-color: var(--wrong-color) !important;
+            box-shadow: 0 5px 0 var(--wrong-color) !important;
+            color: #721C24 !important;
+            animation: shake 0.4s ease-in-out;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-6px); }
+            40%, 80% { transform: translateX(6px); }
+        }
+
+        /* Explanation Box */
+        .explanation-box {
+            display: none;
+            margin-top: 20px;
+            padding: 18px;
+            background: #EBF8FF;
+            border-radius: 16px;
+            border-left: 6px solid #3182CE;
+            font-size: 0.98rem;
+            line-height: 1.65;
+            animation: fadeIn 0.4s ease;
+        }
+
+        .explanation-box h4 {
+            color: #2B6CB0;
+            margin-bottom: 8px;
+            font-weight: 900;
+            font-size: 1.05rem;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Submit Action Section */
+        .submit-container {
+            text-align: center;
+            padding: 20px 0 60px 0;
+        }
+
+        .btn-submit {
+            background: linear-gradient(135deg, #00B894, #00CEC9);
+            color: white;
+            border: none;
+            padding: 16px 45px;
+            font-size: 1.35rem;
+            font-weight: 900;
+            border-radius: 25px;
+            cursor: pointer;
+            box-shadow: 0 8px 0 #009473;
+            transition: all 0.1s ease;
+        }
+
+        .btn-submit:active {
+            transform: translateY(8px);
+            box-shadow: none;
+        }
+
+        /* Modal Overlay Dashboard */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top:0; left:0; width:100%; height:100%;
+            background: rgba(0,0,0,0.75);
+            z-index: 100;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(6px);
+        }
+
+        .score-card {
+            background: white;
+            border-radius: 30px;
+            padding: 40px;
+            width: 90%;
+            max-width: 520px;
+            text-align: center;
+            border: 5px solid #FDCB6E;
+            box-shadow: 0 20px 0 rgba(0,0,0,0.15);
+            animation: zoomIn 0.45s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes zoomIn {
+            from { opacity:0; transform: scale(0.85); }
+            to { opacity:1; transform: scale(1); }
+        }
+
+        .score-num {
+            font-size: 4.5rem;
+            font-weight: 900;
+            color: #6C5CE7;
+            margin: 15px 0;
+        }
+
+        .feedback-text {
+            font-size: 1.35rem;
+            font-weight: 700;
+            color: #2D3436;
+            margin-bottom: 30px;
+        }
+
+        .btn-close-modal {
+            background: #FF7675;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            border-radius: 16px;
+            cursor: pointer;
+            box-shadow: 0 4px 0 #E84393;
+        }
+
+        #confetti-canvas {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 99;
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="confetti-canvas"></canvas>
+
+    <!-- Top Header Control Bar -->
+    <header>
+        <div class="teacher-brand">Giáo viên: Ms Lê Hằng English 🌟</div>
+        <div class="timer-container">
+            <button class="btn-timer" id="timer-toggle-btn" onclick="toggleTimer()">BẮT ĐẦU TÍNH GIỜ LÀM BÀI</button>
+            <div class="timer-display" id="time-clock">10:00</div>
+        </div>
+        <div style="width:180px;"></div>
+    </header>
+
+    <!-- Main Content Container Split View -->
+    <div class="main-container">
+        
+        <!-- LEFT PANEL: FULL READING PASSAGE & GLOSSARY -->
+        <div class="pane left-pane">
+            <div class="passage-card">
+                <h1 class="passage-title">The Secret World of Dolphins 🐬</h1>
+                
+                <p class="paragraph">
+                    Dolphins are highly intelligent marine mammals that live in oceans all over the world. They are well-known for their playful behavior and remarkable social structures. Unlike fish, which breathe underwater using gills, dolphins are mammals and must surface regularly to breathe air through a blowhole located on top of their heads. 
+                </p>
+                <button class="btn-translate" onclick="toggleTranslation(1)">Mở dịch đoạn này 🌟</button>
+                <div class="translation-box" id="trans-1">
+                    Cá heo là loài động vật có vú dưới nước cực kỳ thông minh sống ở các đại dương trên toàn thế giới. Chúng nổi tiếng với hành vi ham chơi và cấu trúc xã hội đáng kinh ngạc. Không giống như cá, loài thở dưới nước bằng mang, cá heo là động vật có vú và phải nổi lên bề mặt thường xuyên để thở không khí thông qua một lỗ phun nước nằm ở đỉnh đầu.
+                </div>
+
+                <p class="paragraph">
+                    Scientists have discovered that dolphins communicate with each other using a complex system of clicks, whistles, and body movements. Each dolphin has a unique signature whistle, which acts just like a human name, allowing individuals to identify and call out to one another in the deep water. Furthermore, they use echolocation to navigate and hunt, emitting sound waves that bounce off objects to map their surroundings perfectly.
+                </p>
+                <button class="btn-translate" onclick="toggleTranslation(2)">Mở dịch đoạn này 🌟</button>
+                <div class="translation-box" id="trans-2">
+                    Các nhà khoa học đã phát hiện ra rằng cá heo giao tiếp với nhau bằng một hệ thống phức tạp gồm các tiếng lách cách, tiếng huýt sáo và các chuyển động của cơ thể. Mỗi con cá heo có một tiếng huýt sáo đặc trưng duy nhất, hoạt động giống như tên của con người, cho phép các cá thể nhận diện và gọi nhau dưới vùng nước sâu. Hơn nữa, chúng sử dụng khả năng định vị bằng tiếng vang để điều hướng và săn mồi, phát ra các sóng âm dội lại từ các vật thể để lập bản đồ môi trường xung quanh một cách hoàn hảo.
+                </div>
+            </div>
+
+            <!-- Glossary Section Block -->
+            <div class="glossary-section">
+                <h3 class="glossary-title">📚 Academic Vocabulary Glossary (B1 - C2)</h3>
+                <table class="glossary-table">
+                    <thead>
+                        <tr>
+                            <th>Từ vựng</th>
+                            <th>Từ loại</th>
+                            <th>Nghĩa tiếng Việt</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td><strong>Intelligent</strong></td><td>adj</td><td>Thông minh, có tư duy sắc sảo</td></tr>
+                        <tr><td><strong>Marine</strong></td><td>adj</td><td>Thuộc về đại dương, biển</td></tr>
+                        <tr><td><strong>Mammal</strong></td><td>noun</td><td>Động vật có vú</td></tr>
+                        <tr><td><strong>Remarkable</strong></td><td>adj</td><td>Đáng kinh ngạc, xuất sắc</td></tr>
+                        <tr><td><strong>Surface</strong></td><td>verb</td><td>Nổi lên bề mặt</td></tr>
+                        <tr><td><strong>Blowhole</strong></td><td>noun</td><td>Lỗ thở (trên đỉnh đầu cá voi, cá heo)</td></tr>
+                        <tr><td><strong>Complex</strong></td><td>adj</td><td>Phức tạp, tinh vi</td></tr>
+                        <tr><td><strong>Signature</strong></td><td>adj/noun</td><td>Đặc trưng riêng biệt, mang tính thương hiệu</td></tr>
+                        <tr><td><strong>Echolocation</strong></td><td>noun</td><td>Sự định vị bằng tiếng vang</td></tr>
+                        <tr><td><strong>Navigate</strong></td><td>verb</td><td>Điều hướng, định vị phương hướng</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- RIGHT PANEL: QUESTIONS AND INTERACTIVE RENDER -->
+        <div class="pane right-pane" id="questions-wrapper">
+            
+            <!-- Question 1: Multiple Choice -->
+            <div class="question-card" data-qtype="mc" data-correct="B">
+                <div class="question-text">
+                    <strong>Question 1:</strong> Dolphins need to come to the surface of the water because they __________.
+                </div>
+                <div class="options-grid">
+                    <button class="option-btn" data-opt="A">A. want to play with human boats</button>
+                    <button class="option-btn" data-opt="B">B. must breathe oxygen from the air through a blowhole</button>
+                    <button class="option-btn" data-opt="C">C. need to find smaller fish to hunt immediately</button>
+                    <button class="option-btn" data-opt="D">D. use gills to filter the salty ocean water</button>
+                </div>
+                <div class="explanation-box">
+                    <h4>👩‍🏫 Giải thích chi tiết từ Thạc sỹ Lê Hằng English:</h4>
+                    <p><strong>1. Phân tích ngữ nghĩa từ vựng 4 đáp án:</strong><br>
+                    • A. Muốn chơi đùa với thuyền của con người (Sai logic thực tế bài đọc).<br>
+                    • B. Phải thở khí oxy từ không khí qua lỗ thở (Đúng cấu trúc đoạn văn).<br>
+                    • C. Cần tìm cá nhỏ để săn ngay lập tức (Sai thông tin ngữ cảnh).<br>
+                    • D. Sử dụng mang để lọc nước biển mặn (Sai kiến thức sinh học được nêu trong bài).</p>
+                    <p><strong>2. Dịch nghĩa toàn câu:</strong> "Cá heo cần phải nổi lên bề mặt nước vì chúng phải hít thở không khí từ khí quyển thông qua một lỗ phun nước trên đầu."</p>
+                    <p><strong>3. Tại sao chọn B?</strong><br>
+                    Dựa chính xác vào dẫn chứng câu cuối đoạn 1: <em>"...dolphins are mammals and must surface regularly to breathe air through a blowhole..."</em>. Loại trừ D vì bài viết nêu rõ cá heo khác cá, chúng không dùng mang (Unlike fish, which breathe underwater using gills).</p>
+                </div>
+            </div>
+
+            <!-- Question 2: True/False/Not Given Style -->
+            <div class="question-card" data-qtype="tfng" data-correct="TRUE">
+                <div class="question-text">
+                    <strong>Question 2:</strong> Every individual dolphin produces a unique whistle that acts similarly to a personal name. 
+                    <span class="tfng-blank" id="q2-blank" onclick="revealTFNG(this, 'TRUE')">Nhấp chọn đáp án</span>
+                </div>
+                <div class="explanation-box">
+                    <h4>👩‍🏫 Giải thích chi tiết từ Thạc sỹ Lê Hằng English:</h4>
+                    <p><strong>Đáp án đúng là: TRUE</strong></p>
+                    <p><strong>Dẫn chứng & Phân tích chuyên sâu:</strong><br>
+                    Tại đoạn văn số 2, các nhà khoa học chỉ ra: <em>"Each dolphin has a unique signature whistle, which acts just like a human name..."</em> (Mỗi con cá heo có một tiếng huýt sáo đặc trưng riêng biệt, thứ hoạt động giống hệt như tên của con người). Câu khẳng định của đề bài hoàn toàn trùng khớp 100% về mặt ý nghĩa, do đó đáp án chính xác phải là TRUE.</p>
+                </div>
+            </div>
+
+            <!-- Question 3: Multiple Choice -->
+            <div class="question-card" data-qtype="mc" data-correct="C">
+                <div class="question-text">
+                    <strong>Question 3:</strong> What technique do dolphins use to map their surroundings and locate objects?
+                </div>
+                <div class="options-grid">
+                    <button class="option-btn" data-opt="A">A. Visual photography underwater</button>
+                    <button class="option-btn" data-opt="B">B. Whistling to human divers</button>
+                    <button class="option-btn" data-opt="C">C. Echolocation by emitting sound waves</button>
+                    <button class="option-btn" data-opt="D">D. Using physical touch with their fins</button>
+                </div>
+                <div class="explanation-box">
+                    <h4>👩‍🏫 Giải thích chi tiết từ Thạc sỹ Lê Hằng English:</h4>
+                    <p><strong>1. Phân tích các đáp án phương án loại trừ:</strong><br>
+                    • A. Chụp ảnh trực quan dưới nước (Không xuất hiện trong bài).<br>
+                    • B. Huýt sáo với thợ lặn con người (Sai ngữ cảnh, tiếng huýt sáo để gọi nhau).<br>
+                    • C. Định vị bằng tiếng vang nhờ phát ra sóng âm dội lại (Chính xác).<br>
+                    • D. Sử dụng xúc giác vật lý từ vây cá (Thông tin không có căn cứ).</p>
+                    <p><strong>2. Dịch nghĩa toàn câu hỏi:</strong> "Kỹ thuật nào mà cá heo dùng để vẽ sơ đồ môi trường xung quanh và xác định vị trí của vật thể?"</p>
+                    <p><strong>3. Tại sao chọn C?</strong><br>
+                    Dẫn chứng nằm ở cuối đoạn văn thứ 2: <em>"Furthermore, they use echolocation to navigate and hunt, emitting sound waves that bounce off objects..."</em> (Hơn nữa, chúng sử dụng sự định vị bằng tiếng vang để điều hướng và săn mồi, phát ra các sóng âm dội ngược lại từ vật thể...).</p>
+                </div>
+            </div>
+
+            <!-- Submit Final Score Button -->
+            <div class="submit-container">
+                <button class="btn-submit" onclick="gradeQuiz()">NỘP BÀI 🎉</button>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Final Result Modal -->
+    <div class="modal-overlay" id="score-modal">
+        <div class="score-card">
+            <h2>🎉 KẾT QUẢ BÀI LÀM TRẮC NGHIỆM 🎉</h2>
+            <div class="score-num" id="score-display">0/3</div>
+            <div class="feedback-text" id="feedback-message">Hãy thử lại nhé!</div>
+            <button class="btn-close-modal" onclick="closeModal()">Làm lại bài thi từ đầu 🔄</button>
+        </div>
+    </div>
+
+    <!-- MAIN INTERACTIVE ENGINE SCRIPT -->
+    <script>
+        // Web Audio API Synthesizer Core Engine (Không cần nạp file audio ngoài)
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+        function playSound(type) {
+            if (audioCtx.state === 'suspended') { audioCtx.resume(); }
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            if (type === 'correct') {
+                // Âm thanh 'Ding' vui tai khi chọn đúng
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(523.25, audioCtx.currentTime); // C5
+                osc.frequency.setValueAtTime(659.25, audioCtx.currentTime + 0.1); // E5
+                gain.gain.setValueAtTime(0.2Normally I can help with things like this, but I don't seem to have access to that content. You can try again or ask me for something else.
